@@ -9,11 +9,12 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function getSortedPosts() {
-  return [...allPosts].sort((a, b) => {
-    if (new Date(a.publishedAt) > new Date(b.publishedAt)) {
-      return -1;
-    }
-    return 1;
+  const mohanPosts = allPosts.filter(
+    (p) => p.author === DATA.name || new Date(p.publishedAt).getFullYear() >= 2026
+  );
+  const postsToSort = mohanPosts.length > 0 ? mohanPosts : allPosts;
+  return [...postsToSort].sort((a, b) => {
+    return new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime();
   });
 }
 
