@@ -1,7 +1,7 @@
 ---
 title: "From Incidents to Insights: Building an AI Incident Triage Workflow"
-publishedAt: "2026-10-04"
-updatedAt: "2026-10-04"
+publishedAt: "2026-10-05"
+updatedAt: "2026-10-05"
 author: "Mohan"
 summary: "An automated incident management system that validates incoming incidents, uses AI for classification and analysis, checks historical patterns, and routes alerts for escalation."
 image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=192&fit=crop"
@@ -9,4 +9,128 @@ image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=192&fi
 
 # From Incidents to Insights: Building an AI Incident Triage Workflow
 
-Coming soon: Deep dive into how automated incident validation, AI-assisted classification, and pattern recognition can streamline incident response and operational escalation.
+In operational support and incident management, the initial response period is often the most critical. When incidents and system alerts are received, manually checking descriptions, validating required fields, understanding severity levels, looking up historical context, and deciding who needs to be notified can quickly become repetitive and time-consuming.
+
+As a student interested in both data analytics and practical operations, I wanted to explore how <mark>AI and workflow automation</mark> could assist with this process. My goal was not to replace human decision-makers, but to focus on <mark>turning incoming incidents into structured, actionable information</mark> so that technical teams can investigate issues faster and with clearer context.
+
+## The Problem I Wanted to Solve
+
+In many organizations, incident logs arrive from different sources — monitoring alerts, user reports, or internal bug tickets. Sifting through these inputs manually often introduces operational bottlenecks:
+
+- **Incoming incident information may need validation**: Reports often arrive with missing fields, malformed timestamps, or ambiguous descriptions that require preliminary cleanup.
+- **Incidents carry different levels of severity**: A critical service disruption requires immediate alerting, while a minor cosmetic glitch should be logged quietly without waking on-call engineers.
+- **Historical incidents provide vital context**: Knowing whether an issue occurred yesterday or has never been seen before changes how an engineer diagnoses the root cause.
+- **Some incidents require escalation**: High-severity events need prompt notification to the right stakeholders through the right channels.
+- **Manual routing introduces delays and inconsistency**: When triage relies entirely on manual sorting, classification criteria can vary between team members or shifts.
+
+I wanted to design an automated pipeline that could systematically <mark>validate, classify, analyze, and route incidents</mark> the moment they are reported.
+
+## Designing the Workflow
+
+To address these challenges, I built an automated end-to-end triage architecture that coordinates validation, data persistence, and two-stage AI analysis.
+
+The system follows a sequential multi-step flow:
+
+```text
+Incident Intake
+   ↓
+Python Validation
+   ↓
+AI Triage
+   ↓
+Historical Data Lookup
+   ↓
+AI Pattern Analysis
+   ↓
+PostgreSQL Storage
+   ↓
+Severity-Based Escalation
+```
+
+- **Incident Intake**: Receives raw incident payloads through a secure webhook trigger.
+- **Python Validation**: Runs a custom script to inspect schema integrity, sanitize inputs, verify timestamp formats, and check mandatory fields.
+- **AI Triage**: Uses a large language model to parse unstructured incident text, classify the incident category, and suggest an initial severity level.
+- **Historical Data Lookup**: Queries PostgreSQL to retrieve past incidents sharing similar service tags, components, or error signatures.
+- **AI Pattern Analysis**: Executes a second AI analysis step that compares the current incident with retrieved historical records to identify recurrence patterns or anomalies.
+- **PostgreSQL Storage**: Persists the full incident record, diagnostics, classifications, and historical findings into structured database tables.
+- **Severity-Based Escalation**: Evaluates business routing rules to trigger urgent alerts via Gmail for critical issues while queuing lower-severity tickets for routine review.
+
+## Where n8n Fits In
+
+Rather than writing a monolithic backend application or managing complex server infrastructure, <mark>n8n acts as the workflow automation layer</mark> connecting each component into a cohesive pipeline.
+
+In this project, n8n orchestrates:
+- **Webhook intake**: Listening for incoming JSON payloads from reporting clients.
+- **Python execution**: Running lightweight validation scripts within code nodes.
+- **PostgreSQL connectivity**: Querying historical data and writing updated incident records.
+- **Groq / LLM API integration**: Formatting prompt contexts and parsing returned model outputs.
+- **Gmail integration**: Dispatching formatted email notifications with structured summaries.
+
+Using n8n makes the entire process visual and modular. Each node has a distinct responsibility, making it straightforward to inspect inputs, monitor execution state, and refine individual stages without rewriting the entire pipeline.
+
+## How AI Helps With Incident Triage
+
+It is crucial to be clear about the role of artificial intelligence in this architecture. AI is not an autonomous decision-maker that guarantees flawless conclusions; rather, it functions as <mark>AI as an additional analysis layer</mark> to assist human operators.
+
+In this workflow, the AI component supports the process by:
+- **Understanding incident information**: Extracting meaning from noisy, freeform text, stack traces, and user descriptions.
+- **Classifying incidents**: Mapping messy reports into standardized functional categories (e.g., database timeout, authentication failure, network latency).
+- **Supporting severity assessment**: Evaluating reported symptoms against standard operational criteria to propose an appropriate severity rating.
+- **Looking at historical context**: Synthesizing historical records to evaluate whether the current incident is an isolated blip or part of an ongoing trend.
+- **Identifying potentially relevant patterns**: Highlighting recent related outages or common failure modes across services.
+- **Supporting escalation decisions**: Providing a concise rationale for why an alert should or should not be escalated.
+
+## Historical Context and Pattern Analysis
+
+From a data analytics and business analysis perspective, individual data points are rarely informative in isolation. The real value emerges when an event is evaluated against historical benchmarks.
+
+When an incident arrives, the workflow queries PostgreSQL to pull recent resolved tickets associated with the same service or error signature. A second AI evaluation node then reviews this historical context alongside the current event:
+- **Context**: If a database connection error has occurred three times this week following a deployment, that pattern is immediately surfaced.
+- **Faster investigation**: Engineers do not need to manually search archive tables to see how a similar incident was resolved previously.
+- **Consistent analysis**: Every incident receives the same standardized comparison against historical records regardless of who is on duty.
+- **Better escalation support**: Escalation notifications include both the current problem and relevant historical context in a single view.
+
+## Escalation and Human Review
+
+Once the incident has been evaluated and stored, the pipeline checks the assessed severity. High-severity and critical incidents immediately trigger an automated email alert via Gmail containing a structured summary, probable category, recommended priority, and historical notes.
+
+However, an essential design principle of this project is that <mark>automation should support human decision-making, not blindly replace it</mark>. The automated workflow handles data collection, parsing, and context assembly so that human engineers can make the final operational decision with all relevant information at their fingertips.
+
+## What I Learned
+
+Building this project from the ground up gave me a much clearer perspective on practical systems engineering:
+
+- **Workflow automation is most useful when the process is clearly defined.** Before configuring nodes in n8n, mapping out inputs, fallback branches, and outputs on paper was essential.
+- **AI works better when it is given structured information and context.** Providing historical database rows alongside the incident prompt dramatically improved the relevance of the analysis.
+- **Historical data can add useful context to operational decisions.** Analyzing events in isolation leads to missed trends; comparing them against past occurrences provides immediate depth.
+- **Automation needs validation and error handling.** Unhandled null values in incoming payloads can halt an entire workflow if defensive validation is not built in early.
+- **Human review remains important for higher-impact decisions.** Automated classification should inform and accelerate human action, not operate unchecked.
+- **Building an end-to-end workflow requires thinking about the complete process, not just individual tools.** Success is not about using n8n or an LLM alone; it is about how smoothly data flows between the intake, database, model, and notification layers.
+
+## Challenges I Faced
+
+Translating this concept into a functional workflow involved several realistic implementation challenges:
+
+- **Structuring incoming incident data**: Reports from different sources arrived with inconsistent structures, requiring careful Python normalization before passing data downstream.
+- **Connecting multiple workflow components**: Ensuring that webhooks, Python scripts, database queries, and API calls exchanged data reliably without format mismatches.
+- **Handling AI-generated outputs**: Designing prompts that consistently returned strict JSON schemas rather than conversational markdown so subsequent nodes could parse fields accurately.
+- **Retrieving historical information**: Formulating efficient SQL queries in PostgreSQL that returned relevant past records without overwhelming the LLM context window.
+- **Designing severity-based routing**: Establishing clear threshold boundaries so that critical incidents were escalated promptly without creating alert fatigue for minor issues.
+- **Making sure automation does not remove necessary human review**: Striking the right balance between automated context generation and human verification.
+
+## What I Would Improve
+
+As I continue developing this project, there are several practical areas I would like to explore:
+
+- **Better incident categorization**: Expanding the classification taxonomy to include more granular service domains and subcomponents.
+- **More configurable severity rules**: Allowing teams to define custom escalation matrices based on specific service level agreements (SLAs).
+- **Improved historical pattern detection**: Broadening the PostgreSQL analytics window to detect recurring seasonal or periodic failure patterns.
+- **More detailed dashboards**: Building visual analytics views in Power BI or web interfaces to track triage volume, category distributions, and resolution times over time.
+- **Better monitoring of workflow execution**: Adding centralized logging to track n8n node execution latencies and API response times.
+- **More structured human-review feedback**: Capturing engineer feedback on triage suggestions to measure classification helpfulness over time.
+
+## Wrap-up
+
+Designing and implementing this incident triage pipeline was an exciting step in my learning journey. It demonstrated firsthand how <mark>AI, automation, and data can work together to improve operational workflows</mark> by taking repetitive diagnostic work off human shoulders and structuring information when it matters most.
+
+This project reinforces my passion for the intersection of **Data Analytics**, **Business Analysis**, and **AI Automation**. By combining structured database queries with flexible workflow engines like **n8n** and modern AI capabilities, we can build digital solutions that make everyday technical and business operations significantly more efficient.
