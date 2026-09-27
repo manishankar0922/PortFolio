@@ -45,5 +45,13 @@ export const mdxComponents = {
       </code>
     );
   },
+  mark: ({ children, ...props }: ComponentProps<"mark">) => (
+    <mark
+      className="bg-yellow-200/90 dark:bg-yellow-400/25 text-neutral-950 dark:text-yellow-200 px-1.5 py-0.5 rounded-sm font-medium"
+      {...props}
+    >
+      {children}
+    </mark>
+  ),
 } as const;
 

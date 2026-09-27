@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DATA } from "@/data/resume";
 import Link from "next/link";
 import Markdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import ContactSection from "@/components/section/contact-section";
 import HackathonsSection from "@/components/section/hackathons-section";
 import ProjectsSection from "@/components/section/projects-section";
@@ -27,7 +28,7 @@ export default function Page() {
                 text={`Hi, I'm ${DATA.name.split(" ")[0]}`}
               />
               <BlurFadeText
-                className="text-muted-foreground max-w-[600px] md:text-lg lg:text-xl"
+                className="text-muted-foreground max-w-[600px] text-sm md:text-base leading-relaxed"
                 delay={BLUR_FADE_DELAY}
                 text={DATA.description}
               />
@@ -47,8 +48,18 @@ export default function Page() {
             <h2 className="text-xl font-bold">About</h2>
           </BlurFade>
           <BlurFade delay={BLUR_FADE_DELAY * 4}>
-            <div className="prose max-w-full text-pretty font-sans leading-relaxed text-muted-foreground dark:prose-invert">
-              <Markdown>
+            <div className="prose max-w-full text-pretty font-sans text-sm md:text-base leading-relaxed text-muted-foreground dark:prose-invert [&_p]:text-sm [&_p]:md:text-base [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_u]:text-black [&_u]:dark:text-white [&_u]:font-medium [&_u]:decoration-black [&_u]:dark:decoration-white [&_u]:underline-offset-4">
+              <Markdown
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  u: ({ node, ...props }) => (
+                    <u
+                      className="text-black dark:text-white font-medium decoration-black dark:decoration-white underline underline-offset-4"
+                      {...props}
+                    />
+                  ),
+                }}
+              >
                 {DATA.summary}
               </Markdown>
             </div>
@@ -76,12 +87,7 @@ export default function Page() {
                 key={education.school}
                 delay={BLUR_FADE_DELAY * 8 + index * 0.05}
               >
-                <Link
-                  href={education.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-x-3 justify-between group"
-                >
+                <div className="flex items-center gap-x-3 justify-between group">
                   <div className="flex items-center gap-x-3 flex-1 min-w-0">
                     {education.logoUrl ? (
                       <img
@@ -94,8 +100,19 @@ export default function Page() {
                     )}
                     <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                       <div className="font-semibold leading-none flex items-center gap-2">
-                        {education.school}
-                        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" aria-hidden />
+                        {education.href && education.href !== "#" ? (
+                          <Link
+                            href={education.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline flex items-center gap-2"
+                          >
+                            {education.school}
+                            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" aria-hidden />
+                          </Link>
+                        ) : (
+                          education.school
+                        )}
                       </div>
                       <div className="font-sans text-sm text-muted-foreground">
                         {education.degree}
@@ -107,7 +124,7 @@ export default function Page() {
                       {education.start} - {education.end}
                     </span>
                   </div>
-                </Link>
+                </div>
               </BlurFade>
             ))}
           </div>
@@ -122,7 +139,13 @@ export default function Page() {
             {DATA.skills.map((skill, id) => (
               <BlurFade key={skill.name} delay={BLUR_FADE_DELAY * 10 + id * 0.05}>
                 <div className="border bg-background border-border ring-2 ring-border/20 rounded-xl h-8 w-fit px-4 flex items-center gap-2">
-                  {skill.icon && <skill.icon className="size-4 rounded overflow-hidden object-contain" />}
+                  {skill.icon && (
+                    <img
+                      src={skill.icon}
+                      alt={skill.name}
+                      className="size-4 rounded overflow-hidden object-contain flex-none"
+                    />
+                  )}
                   <span className="text-foreground text-sm font-medium">{skill.name}</span>
                 </div>
               </BlurFade>
@@ -135,7 +158,7 @@ export default function Page() {
           <ProjectsSection />
         </BlurFade>
       </section>
-      <section id="hackathons">
+      <section id="beyond-projects">
         <BlurFade delay={BLUR_FADE_DELAY * 13}>
           <HackathonsSection />
         </BlurFade>

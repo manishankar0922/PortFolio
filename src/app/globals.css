@@ -233,4 +233,21 @@
     @apply border-b-0;
   }
 
+  .prose mark,
+  mark {
+    background-color: #fef08a;
+    color: #171717;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .dark .prose mark,
+  .dark mark {
+    background-color: rgba(234, 179, 8, 0.3);
+    color: #fef08a;
+  }
+
 }
