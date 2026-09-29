@@ -1,6 +1,9 @@
+"use client";
+
 import { Dock, DockIcon } from "@/components/magicui/dock";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Separator } from "@/components/ui/separator";
+import { handleSendEmail } from "@/lib/email";
 import {
   Tooltip,
   TooltipArrow,
@@ -47,12 +50,18 @@ export default function Navbar() {
           .filter(([_, social]) => social.navbar)
           .map(([name, social], index) => {
             const isExternal = social.url.startsWith("http");
+            const isMailto = social.url.startsWith("mailto:");
             const IconComponent = social.icon;
             return (
               <Tooltip key={`social-${name}-${index}`}>
                 <TooltipTrigger asChild>
                   <a
                     href={social.url}
+                    onClick={
+                      isMailto
+                        ? (e) => handleSendEmail(e, DATA.contact.email)
+                        : undefined
+                    }
                     target={isExternal ? "_blank" : undefined}
                     rel={isExternal ? "noopener noreferrer" : undefined}
                   >

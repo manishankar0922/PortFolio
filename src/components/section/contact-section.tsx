@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { FlickeringGrid } from "@/components/magicui/flickering-grid";
 import { DATA } from "@/data/resume";
+import { handleSendEmail } from "@/lib/email";
 
 export default function ContactSection() {
   return (
@@ -36,6 +39,7 @@ export default function ContactSection() {
           or send me an{" "}
           <Link
             href={DATA.contact.social.email.url}
+            onClick={(e) => handleSendEmail(e, DATA.contact.email)}
             className="text-blue-500 hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm font-medium"
           >
             email
