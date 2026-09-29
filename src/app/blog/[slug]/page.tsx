@@ -7,6 +7,7 @@ import { MDXContent } from "@content-collections/mdx/react";
 import { mdxComponents } from "@/mdx-components";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import ReadingProgress from "@/components/reading-progress";
 
 function getSortedPosts() {
   const mohanPosts = allPosts.filter(
@@ -116,6 +117,7 @@ export default async function Blog({
 
   return (
     <section id="blog">
+      <ReadingProgress />
       <script
         type="application/ld+json"
         suppressHydrationWarning
