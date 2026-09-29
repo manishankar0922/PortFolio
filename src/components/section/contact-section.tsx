@@ -36,8 +36,6 @@ export default function ContactSection() {
           or send me an{" "}
           <Link
             href={DATA.contact.social.email.url}
-            target="_blank"
-            rel="noopener noreferrer"
             className="text-blue-500 hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm font-medium"
           >
             email
