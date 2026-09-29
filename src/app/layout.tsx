@@ -8,6 +8,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { FlickeringGrid } from "@/components/magicui/flickering-grid";
 import { Toaster } from "sonner";
+import CustomCursor from "@/components/custom-cursor";
+import SmoothScroll from "@/components/smooth-scroll";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -72,6 +74,8 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="light">
+          <SmoothScroll />
+          <CustomCursor />
           <TooltipProvider delayDuration={0}>
             <div className="absolute inset-0 top-0 left-0 right-0 h-[100px] overflow-hidden z-0">
               <FlickeringGrid
