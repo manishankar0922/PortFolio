@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 export default function CustomCursor() {
   const [visible, setVisible] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [hoverType, setHoverType] = useState<"default" | "interactive" | "text" | "input">("default");
   const [clicked, setClicked] = useState(false);
 
-  const dotRef = useRef<HTMLDivElement>(null);
+  const pointerRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
 
   const mousePos = useRef({ x: -100, y: -100 });
@@ -15,32 +15,51 @@ export default function CustomCursor() {
   const rafId = useRef<number | null>(null);
 
   useEffect(() => {
-    // Enable custom cursor as soon as any mouse activity occurs
+    // Immediately mark document to hide default OS cursor
+    document.documentElement.classList.add("has-custom-cursor");
+
     let isTracking = false;
 
     const onMouseMove = (e: MouseEvent) => {
-      mousePos.current = { x: e.clientX, y: e.clientY };
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+      mousePos.current = { x: clientX, y: clientY };
 
       if (!isTracking) {
         isTracking = true;
+        ringPos.current = { x: clientX, y: clientY };
         setVisible(true);
-        document.documentElement.classList.add("has-custom-cursor");
+      } else if (!visible) {
+        setVisible(true);
       }
 
-      // Fast precision center dot (zero lag)
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+      // Zero-lag hardware-accelerated precision pointer (instant follow)
+      if (pointerRef.current) {
+        pointerRef.current.style.transform = `translate3d(${clientX}px, ${clientY}px, 0)`;
       }
 
-      // Detect hover over any interactive element
+      // Detect hover context
       const target = e.target as HTMLElement | null;
       if (target) {
+        if (target.closest("input, textarea")) {
+          setHoverType("input");
+          return;
+        }
+
         const isInteractive = Boolean(
           target.closest(
-            'a, button, input, textarea, select, [role="button"], [data-cursor="hover"], .cursor-pointer, svg'
+            'a, button, [role="button"], [data-cursor="hover"], .cursor-pointer, summary'
           )
         );
-        setHovered(isInteractive);
+
+        if (isInteractive) {
+          setHoverType("interactive");
+        } else {
+          const isText = Boolean(
+            target.closest("p, h1, h2, h3, h4, h5, h6, li, span.font-mono, code, blockquote")
+          );
+          setHoverType(isText ? "text" : "default");
+        }
       }
     };
 
@@ -49,7 +68,14 @@ export default function CustomCursor() {
     const onMouseLeave = () => setVisible(false);
     const onMouseEnter = () => setVisible(true);
 
-    // Smooth lerp physics for the outer aura ring
+    const onTouchStart = () => {
+      // Disable custom cursor on touch interaction
+      setVisible(false);
+      document.documentElement.classList.remove("has-custom-cursor");
+      isTracking = false;
+    };
+
+    // Smooth lerp physics for trailing aura ring (60Hz / 120Hz smooth tracking)
     const lerp = (start: number, end: number, factor: number) =>
       start + (end - start) * factor;
 
@@ -69,6 +95,7 @@ export default function CustomCursor() {
     window.addEventListener("mouseup", onMouseUp);
     document.addEventListener("mouseleave", onMouseLeave);
     document.addEventListener("mouseenter", onMouseEnter);
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
 
     rafId.current = requestAnimationFrame(renderLoop);
 
@@ -78,41 +105,78 @@ export default function CustomCursor() {
       window.removeEventListener("mouseup", onMouseUp);
       document.removeEventListener("mouseleave", onMouseLeave);
       document.removeEventListener("mouseenter", onMouseEnter);
+      window.removeEventListener("touchstart", onTouchStart);
       document.documentElement.classList.remove("has-custom-cursor");
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, []);
+  }, [visible]);
 
   return (
     <div
-      className={`pointer-events-none fixed inset-0 z-9999 select-none transition-opacity duration-200 ${
-        visible ? "opacity-100" : "opacity-0"
+      style={{ zIndex: 999999 }}
+      className={`pointer-events-none fixed inset-0 select-none transition-opacity duration-200 ${
+        visible && hoverType !== "input" ? "opacity-100" : "opacity-0"
       }`}
       aria-hidden="true"
     >
-      {/* Outer fluid trailing ring with glow */}
+      {/* Trailing Fluid Geometric Aura / Magnetic Reticle */}
       <div
         ref={ringRef}
-        className={`fixed top-0 left-0 -ml-4 -mt-4 rounded-full pointer-events-none transition-[width,height,margin,background-color,border-color,transform] duration-200 ease-out will-change-transform ${
-          hovered
-            ? "size-10 -ml-5 -mt-5 bg-amber-400/20 border-2 border-amber-400 dark:border-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.4)] backdrop-blur-[0.5px]"
-            : clicked
-            ? "size-6 -ml-3 -mt-3 bg-amber-400/30 border border-amber-500 scale-90"
-            : "size-8 -ml-4 -mt-4 bg-transparent border border-neutral-800/40 dark:border-neutral-200/40"
-        }`}
-      />
+        className="fixed top-0 left-0 pointer-events-none will-change-transform"
+      >
+        <div
+          className={`pointer-events-none transition-[width,height,margin,background-color,border-color,opacity,border-radius,box-shadow,transform] duration-200 ease-out ${
+            hoverType === "interactive"
+              ? "size-12 -ml-6 -mt-6 rounded-full bg-amber-400/20 dark:bg-yellow-400/20 border-2 border-amber-500/90 dark:border-yellow-300/90 shadow-[0_0_24px_rgba(251,191,36,0.45)] backdrop-blur-[0.5px]"
+              : hoverType === "text"
+              ? "w-1 h-6 -ml-0.5 -mt-3 rounded-full bg-amber-500/80 dark:bg-yellow-400/80 border-none shadow-[0_0_12px_rgba(251,191,36,0.6)]"
+              : clicked
+              ? "size-5 -ml-2.5 -mt-2.5 rounded-full bg-amber-400/40 border border-amber-500 scale-75"
+              : "size-8 -ml-4 -mt-4 rounded-[36%] bg-amber-400/5 dark:bg-yellow-400/5 border border-amber-500/40 dark:border-yellow-400/50 shadow-sm"
+          }`}
+        />
+      </div>
 
-      {/* Inner sharp precision diamond/dot */}
+      {/* Zero-Lag Precision Geometric Pointer Needle */}
       <div
-        ref={dotRef}
-        className={`fixed top-0 left-0 -ml-1 -mt-1 rounded-full pointer-events-none transition-[transform,background-color] duration-75 ease-out will-change-transform ${
-          hovered
-            ? "size-2.5 -ml-1.25 -mt-1.25 bg-amber-500 dark:bg-yellow-400 scale-125 shadow-sm"
-            : clicked
-            ? "size-2 -ml-1 -mt-1 bg-amber-600 scale-75"
-            : "size-2 -ml-1 -mt-1 bg-neutral-900 dark:bg-neutral-100"
-        }`}
-      />
+        ref={pointerRef}
+        className="fixed top-0 left-0 pointer-events-none will-change-transform"
+      >
+        <div
+          className={`transition-[transform,opacity] duration-150 ease-out ${
+            hoverType === "text"
+              ? "opacity-0 scale-50"
+              : hoverType === "interactive"
+              ? "scale-90"
+              : clicked
+              ? "scale-75 -rotate-12"
+              : "scale-100"
+          }`}
+        >
+          {/* Custom Aerodynamic Precision Arrow Needle */}
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="-ml-[2px] -mt-[2px] filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] dark:drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]"
+          >
+            {/* Sleek faceted needle body */}
+            <path
+              d="M2.5 2L18 10L10.5 12L8 19.5L2.5 2Z"
+              className="fill-neutral-950 stroke-neutral-50 dark:fill-neutral-100 dark:stroke-neutral-900 stroke-[1.25px]"
+              strokeLinejoin="round"
+            />
+            {/* Radiant amber nucleus core */}
+            <circle
+              cx="7.5"
+              cy="7.5"
+              r="2"
+              className="fill-amber-400 dark:fill-yellow-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]"
+            />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }

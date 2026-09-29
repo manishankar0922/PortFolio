@@ -300,6 +300,12 @@ a, button, [role="button"], .cursor-pointer {
 
 /* When custom animated cursor is active, hide the native OS pointer */
 html.has-custom-cursor,
+html.has-custom-cursor body,
 html.has-custom-cursor * {
   cursor: none !important;
+}
+
+html.has-custom-cursor input,
+html.has-custom-cursor textarea {
+  cursor: text !important;
 }
